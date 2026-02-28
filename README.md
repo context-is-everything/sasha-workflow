@@ -121,6 +121,52 @@ See the [full specification](SPEC.md) for complete details, step types, agent de
 
 See the [examples/](examples/) directory for complete implementations of each pattern.
 
+## Agent Flow in Practice
+
+Agent Flow isn't just a spec on paper — it has a working visual editor in [Sasha Studio](https://github.com/context-is-everything/sasha-ai-knowledge-management). The screenshots below show how the three recommended patterns come to life.
+
+### Managing Workflows
+
+The workflow manager lists all Agent Flow files with their metadata at a glance: layer badge, active/draft status, trigger types (Manual, API, Schedule), and one-click editing. Workflows are plain markdown files — what you see here maps directly to frontmatter fields in the spec.
+
+![Workflow Manager — three workflows showing layer badges, status, and trigger types](docs/screenshots/workflow-manager.png)
+
+### Creating from Templates
+
+New workflows start from one of three templates matching the recommended patterns. Each template generates a complete Agent Flow file with frontmatter, steps, agents, and observability — ready to customize.
+
+- **Simple Pipeline (Layer 1)** — Sequential steps: validate, process, output
+- **Agentic Workflow (Layer 2)** — Specialist agents with a quality review gate
+- **Parallel Fan-out (Layer 2)** — Split work across multiple agents, merge results, confirm
+
+![Template picker — Simple Pipeline, Agentic Workflow, and Parallel Fan-out](docs/screenshots/workflow-templates.png)
+
+### Visual Workflow Editor — Canvas View
+
+The canvas renders each `step` block as a node in a directed graph. Nodes are color-coded by step type:
+
+- **Blue** — `transform` steps (validate, filter, format)
+- **Green** — `tool` steps (external integrations, file I/O)
+- **Teal** — `parallel` steps (fan-out to worker bundles)
+
+Edges show the execution flow. Conditional edges (like `on_error: fallback`) are labelled so you can see branching logic at a glance. This is the `report-publisher-pipeline` example — a 9-step Layer 2 workflow with conditional fallback paths.
+
+![Visual workflow editor — 9-step pipeline with color-coded nodes and conditional edges](docs/screenshots/workflow-editor-canvas.png)
+
+### Split View — Canvas + Code Side by Side
+
+The split view shows the visual graph alongside the raw markdown. Every frontmatter field, step block, and agent definition from the spec is visible in the code pane. Edit either side — they stay in sync.
+
+This is the view a product manager uses to understand what the workflow does (canvas) while an engineer tweaks the details (code).
+
+![Split view — visual graph on the left, YAML/markdown definition on the right](docs/screenshots/workflow-editor-split.png)
+
+### Code View — The Spec as Written
+
+The code view shows the full Agent Flow file: YAML frontmatter (name, kind, version, description, triggers, budgets, tool permissions, input/output schemas) followed by markdown step definitions. This is the actual file on disk — no abstraction layer, no proprietary format.
+
+![Code view — full workflow definition with frontmatter, budgets, tools, and input schema](docs/screenshots/workflow-editor-code.png)
+
 ## Standards We Build On
 
 Agent Flow borrows proven concepts from established standards:
