@@ -1,0 +1,161 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/context-is-everything/sasha-workflow/spec/schema.json",
+  "title": "Agent Flow Frontmatter",
+  "description": "JSON Schema for validating Agent Flow workflow frontmatter (YAML between --- delimiters).",
+  "type": "object",
+  "required": ["name", "description"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "kebab-case workflow identifier",
+      "pattern": "^[a-z0-9][a-z0-9-]*$"
+    },
+    "description": {
+      "type": "string",
+      "description": "What this workflow does and when to use it"
+    },
+    "kind": {
+      "type": "string",
+      "const": "agent-flow/workflow",
+      "description": "Identifies this as an Agent Flow workflow (required for Layer 1+)"
+    },
+    "version": {
+      "type": "string",
+      "description": "Semantic version (e.g. 1.0.0)",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "category": {
+      "type": "string",
+      "description": "Workflow category (e.g. document-processing, analysis)"
+    },
+    "icon": {
+      "type": "string",
+      "description": "Unicode name or emoji"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["draft", "active", "deprecated"],
+      "description": "Workflow lifecycle status"
+    },
+    "owner": {
+      "type": "string",
+      "description": "Team or person responsible for this workflow"
+    },
+    "extends": {
+      "type": "string",
+      "description": "Path to base skill this workflow wraps (overlay model)"
+    },
+    "risk_profile": {
+      "type": "string",
+      "enum": ["low", "medium", "high", "critical"],
+      "description": "Risk classification"
+    },
+    "budgets": {
+      "type": "object",
+      "description": "Resource limits for the workflow run",
+      "properties": {
+        "max_steps": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Hard cap on step executions"
+        },
+        "max_tool_calls": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Hard cap on tool invocations"
+        },
+        "max_tokens": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Total token budget across all LLM calls"
+        },
+        "deadline_seconds": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Wall-clock timeout for entire run"
+        }
+      },
+      "additionalProperties": false
+    },
+    "triggers": {
+      "type": "object",
+      "description": "How and when the workflow is executed",
+      "properties": {
+        "schedule": {
+          "type": "string",
+          "description": "Cron expression (e.g. 0 6 * * *)"
+        },
+        "timezone": {
+          "type": "string",
+          "description": "IANA timezone (default: UTC)"
+        },
+        "manual": {
+          "type": "boolean",
+          "description": "Can be run on demand (default: true)"
+        },
+        "api": {
+          "type": "boolean",
+          "description": "Can be triggered via API (default: false)"
+        },
+        "event": {
+          "type": "string",
+          "description": "Event type that triggers this workflow"
+        }
+      },
+      "additionalProperties": false
+    },
+    "tools": {
+      "type": "object",
+      "description": "Tool governance configuration",
+      "properties": {
+        "allowlist": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Only these tools may be called"
+        },
+        "denylist": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "These tools are prohibited"
+        },
+        "workers_can_call_tools": {
+          "type": "boolean",
+          "description": "Whether bundle workers can use tools (default: false)"
+        }
+      },
+      "additionalProperties": false
+    },
+    "input": {
+      "type": "object",
+      "description": "Input contract",
+      "properties": {
+        "schema": {
+          "type": "object",
+          "description": "Inline JSON Schema for input validation"
+        },
+        "schema_ref": {
+          "type": "string",
+          "description": "Path to external JSON Schema file"
+        }
+      },
+      "additionalProperties": false
+    },
+    "output": {
+      "type": "object",
+      "description": "Output contract",
+      "properties": {
+        "schema": {
+          "type": "object",
+          "description": "Inline JSON Schema for output validation"
+        },
+        "schema_ref": {
+          "type": "string",
+          "description": "Path to external JSON Schema file"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

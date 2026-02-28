@@ -197,7 +197,7 @@ sasha-workflow/
 
 ## Status
 
-This specification is a **draft proposal**. We welcome feedback via [issues](https://github.com/context-is-everything/sasha-workflow/issues) and [discussions](https://github.com/context-is-everything/sasha-workflow/discussions).
+**Spec version: 0.2.0 (Draft)** — This specification is a draft proposal. We welcome feedback via [issues](https://github.com/context-is-everything/sasha-workflow/issues) and [discussions](https://github.com/context-is-everything/sasha-workflow/discussions).
 
 ## License
 

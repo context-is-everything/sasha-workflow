@@ -1,6 +1,6 @@
 # Agent Flow Specification
 
-**Version**: 0.1.0 (Draft)
+**Version**: 0.2.0 (Draft)
 
 ## 1. Introduction
 
@@ -100,6 +100,7 @@ version: string                  # semver (e.g., "1.0.0")
 category: string                 # e.g., "document-processing", "analysis"
 icon: string                     # unicode name or emoji
 status: string                   # draft | active | deprecated
+owner: string                    # team or person responsible for this workflow
 
 # === Optional — Overlay ===
 extends: string                  # path to base skill this workflow wraps
@@ -207,6 +208,8 @@ reason_code_on_fail: BRIEF_INSUFFICIENT
 | `branches` | No | object | Named routes (for `type: decision`) |
 | `goto` | No | string | Explicit next step ID (overrides sequential ordering) |
 | `gate_method` | No | string | `human_review` \| `automated` \| `critic_agent` |
+| `output_files` | No | [string] | Files this step creates (e.g. `report.pdf`, `summary.md`) |
+| `audit_output` | No | string | Path to JSON audit file for reconciliation |
 
 ### 3.3 Step Types
 
@@ -218,6 +221,7 @@ reason_code_on_fail: BRIEF_INSUFFICIENT
 | `decision` | Choose a path based on state | "Decide which department handles this" |
 | `gate` | Approval checkpoint (human or automated) | "Manager signs off before proceeding" |
 | `parallel` | Fan out to a bundle of workers | "Split the work across the team" |
+| `subagent_bundle` | Alias for `parallel` | Same as `parallel` — alternative naming for clarity |
 | `end` | Explicit terminal step | "Done — close the file" |
 
 ### 3.4 Execution Model
@@ -449,6 +453,11 @@ required_ids:
   - run_id
   - trace_id
   - step_id
+
+redaction:
+  pii: true
+  secrets: true
+  patterns: ["SSN", "credit_card"]
 ```
 ````
 
@@ -530,6 +539,12 @@ For workflows that pause and resume — waiting for human approval, file uploads
 ```runtime
 checkpoint_after_each_step: true
 resume_supported: true
+max_concurrency: 4
+approval_required: false
+human_in_the_loop: false
+
+checkpoints:
+  - every: 3_steps
 
 waitpoints:
   - id: WP_APPROVAL
@@ -552,6 +567,10 @@ waitpoints:
 |----------|------|-------------|
 | `checkpoint_after_each_step` | boolean | Persist state after every step (default: false) |
 | `resume_supported` | boolean | Whether the workflow can be resumed from a checkpoint |
+| `max_concurrency` | integer | Maximum parallel workers (default: unbounded) |
+| `approval_required` | boolean | Whether human approval is needed before execution (default: false) |
+| `human_in_the_loop` | boolean | Whether a human can intervene at any point (default: false) |
+| `checkpoints` | [object] | Periodic state snapshots (e.g. `every: 3_steps`) |
 
 ### 8.3 Waitpoints
 
@@ -702,12 +721,13 @@ validate → fan-out to workers → merge → confirmation gate → output
 
 | Type | Required Fields | Optional Fields |
 |------|----------------|-----------------|
-| `transform` | `id`, `type`, `description` | `reads`, `writes`, `when`, `on_error`, `expected_output` |
-| `skill` | `id`, `type`, `description`, `skill_ref` or `agent` | `reads`, `writes`, `when`, `on_error`, `expected_output` |
-| `tool` | `id`, `type`, `description`, `tool` | `reads`, `writes`, `when`, `retry`, `fallback` |
+| `transform` | `id`, `type`, `description` | `reads`, `writes`, `when`, `on_error`, `expected_output`, `output_files`, `audit_output` |
+| `skill` | `id`, `type`, `description`, `skill_ref` or `agent` | `reads`, `writes`, `when`, `on_error`, `expected_output`, `output_files`, `audit_output` |
+| `tool` | `id`, `type`, `description`, `tool` | `reads`, `writes`, `when`, `retry`, `fallback`, `output_files`, `audit_output` |
 | `decision` | `id`, `type`, `description`, `branches` | `reads` |
 | `gate` | `id`, `type`, `description` | `reads`, `writes`, `agent`, `gate_method`, `when` |
 | `parallel` | `id`, `type`, `description`, `bundle` | `reads`, `writes` |
+| `subagent_bundle` | `id`, `type`, `description`, `bundle` | `reads`, `writes` (alias for `parallel`) |
 | `end` | `id`, `type` | `description`, `reason_code` |
 
 ## Appendix B: Full Frontmatter JSON Schema
