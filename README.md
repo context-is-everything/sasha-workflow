@@ -123,13 +123,13 @@ See the [examples/](examples/) directory for complete implementations of each pa
 
 ## Agent Flow in Practice
 
-Agent Flow isn't just a spec on paper — it has a working visual editor in [Sasha Studio](https://github.com/context-is-everything/sasha-ai-knowledge-management). The screenshots below show how the three recommended patterns come to life.
+Agent Flow isn't just a spec on paper — it has a working visual editor in [Sasha Studio](https://github.com/context-is-everything/sasha-ai-knowledge-management). The screenshots below show the `client-onboarding` example — a full Layer 3 workflow with 9 steps, 4 agents, parallel bundles, approval gates, output files, audit artifacts, and error handling.
 
 ### Managing Workflows
 
 The workflow manager lists all Agent Flow files with their metadata at a glance: layer badge, active/draft status, trigger types (Manual, API, Schedule), and one-click editing. Workflows are plain markdown files — what you see here maps directly to frontmatter fields in the spec.
 
-![Workflow Manager — three workflows showing layer badges, status, and trigger types](docs/screenshots/workflow-manager.png)
+![Workflow Manager — four workflows showing layer badges, status, and trigger types](docs/screenshots/workflow-manager.png)
 
 ### Creating from Templates
 
@@ -143,15 +143,63 @@ New workflows start from one of three templates matching the recommended pattern
 
 ### Visual Workflow Editor — Canvas View
 
-The canvas renders each `step` block as a node in a directed graph. Nodes are color-coded by step type:
+The canvas renders each `step` block as a node in a directed graph. The full `client-onboarding` workflow is shown here — 9 steps from intake validation through to final onboarding summary.
 
-- **Blue** — `transform` steps (validate, filter, format)
-- **Green** — `tool` steps (external integrations, file I/O)
-- **Teal** — `parallel` steps (fan-out to worker bundles)
+![Visual workflow editor — full client-onboarding workflow with 9 steps, artifacts, and error handlers](docs/screenshots/workflow-editor-canvas.png)
 
-Edges show the execution flow. Conditional edges (like `on_error: fallback`) are labelled so you can see branching logic at a glance. This is the `report-publisher-pipeline` example — a 9-step Layer 2 workflow with conditional fallback paths.
+#### Node Types
 
-![Visual workflow editor — 9-step pipeline with color-coded nodes and conditional edges](docs/screenshots/workflow-editor-canvas.png)
+Every spec concept has a visual representation on the canvas:
+
+| Node | Represents | Spec field |
+|------|-----------|------------|
+| ![Trigger](docs/screenshots/node-trigger.png) | How the workflow starts | `triggers:` frontmatter |
+| ![Bundle step](docs/screenshots/node-bundle.png) | Parallel subagent execution | `type: subagent_bundle` |
+| ![Gate step](docs/screenshots/node-gate.png) | Approval checkpoint with conditions | `type: gate` + `when:` |
+| ![Skill step](docs/screenshots/node-skill.png) | AI specialist delegation | `type: skill` |
+| ![Artifact](docs/screenshots/node-artifact.png) | Output file produced by a step | `output_files:` |
+| ![Audit artifact](docs/screenshots/node-audit.png) | JSON audit trail | `audit_output:` |
+| ![Error handler](docs/screenshots/node-error.png) | Error handling path | `on_error:` |
+
+Nodes are color-coded by step type: blue for `transform`, green for `tool`, teal for `subagent_bundle`, coral for `gate`, indigo for `skill`, and dark gray for `end`. Artifact nodes branch off to the right of their source step, and error handlers branch to the left with dashed red connectors.
+
+### Step Inspector
+
+Click any step node to open the property inspector. Every field from the spec's step definition is editable: type, description, reads/writes, output files, audit output, error handling, run conditions, agent assignment, expected output, and reason codes.
+
+![Step inspector — editing generate_welcome_pack with all spec fields visible](docs/screenshots/step-inspector.png)
+
+<details>
+<summary>Inspector panel detail</summary>
+
+![Step inspector panel — Skill step with inputs, outputs, files, rules, AI behaviour, and tracking](docs/screenshots/step-inspector-panel.png)
+
+The inspector is organized into sections that mirror the spec structure:
+- **Basics** — Step name, type, description
+- **Inputs & Outputs** — `reads`, `writes`, `output_files`, `audit_output`
+- **Rules** — `when` condition, `on_error` handling, `fallback`, `retry`, `stop_condition`
+- **AI Behaviour** — `expected_output`, `agent`, `gate_method`, `tool`, `bundle`
+- **Tracking** — `reason_code`, `reason_code_on_fail`
+
+</details>
+
+### Artifact Inspector
+
+Click an artifact or audit node to inspect it. The artifact inspector shows the filename, source step, step type, and lists all output files from that step — with the selected file highlighted.
+
+![Artifact inspector — welcome-letter.pdf showing source step and sibling output files](docs/screenshots/artifact-inspector.png)
+
+### Audit Artifact Inspector
+
+Audit artifacts represent the `audit_output` field from the spec. Clicking one shows the JSON filename, the source step, and the step description.
+
+![Audit inspector — audit-background-research.json from the subagent_bundle step](docs/screenshots/audit-inspector.png)
+
+### Dependencies View
+
+Toggle the Dependencies button to overlay implicit data-flow edges derived from `reads`/`writes` declarations. These dashed lines show which steps depend on data produced by earlier steps — even when they aren't adjacent in the execution order. Fallback edges are shown as red dashed lines.
+
+![Dependencies view — implicit data-flow edges showing state.validated_intake flowing to multiple downstream steps](docs/screenshots/workflow-dependencies.png)
 
 ### Split View — Canvas + Code Side by Side
 
@@ -161,11 +209,11 @@ This is the view a product manager uses to understand what the workflow does (ca
 
 ![Split view — visual graph on the left, YAML/markdown definition on the right](docs/screenshots/workflow-editor-split.png)
 
-### Code View — The Spec as Written
+### Workflow Chat
 
-The code view shows the full Agent Flow file: YAML frontmatter (name, kind, version, description, triggers, budgets, tool permissions, input/output schemas) followed by markdown step definitions. This is the actual file on disk — no abstraction layer, no proprietary format.
+The floating chat bar at the bottom of the editor lets you modify workflows conversationally. Type natural language instructions (e.g. "add a retry to the send_notifications step") and the AI updates the workflow markdown, which immediately re-renders on the canvas.
 
-![Code view — full workflow definition with frontmatter, budgets, tools, and input schema](docs/screenshots/workflow-editor-code.png)
+![Workflow chat bar — contextual suggestions and natural language input](docs/screenshots/workflow-chat-bar.png)
 
 ## Standards We Build On
 
@@ -193,6 +241,8 @@ sasha-workflow/
 │   ├── report-publisher-pipeline.md # Deterministic: multi-format export
 │   ├── client-onboarding.md         # Full-featured: v0.2.0 showcase with all new fields
 │   └── simple-skill.md              # Layer 0: plain skill as workflow
+├── docs/
+│   └── screenshots/     # Visual editor screenshots from Sasha Studio
 └── README.md
 ```
 
