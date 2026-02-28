@@ -17,6 +17,10 @@ budgets:
   max_tokens: 40000
   deadline_seconds: 300
 
+triggers:
+  manual: true
+  api: true
+
 tools:
   allowlist: [drive.read, calendar.lookup]
   workers_can_call_tools: false

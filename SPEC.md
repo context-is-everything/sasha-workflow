@@ -131,6 +131,33 @@ output:
 ---
 ```
 
+### 2.4 Triggers
+
+Trigger configuration defines how and when a workflow is executed. This lives in the frontmatter so the workflow file is fully self-contained — no separate schedule or task record needed.
+
+```yaml
+# === Optional — Triggers ===
+triggers:
+  schedule: string             # cron expression (e.g., "0 6 * * *")
+  timezone: string             # IANA timezone (default: UTC)
+  manual: boolean              # can be run on demand (default: true)
+  api: boolean                 # can be triggered via API (default: false)
+  event: string                # event type that triggers this workflow (e.g., "file_uploaded")
+```
+
+**Design rationale**: The workflow file IS the task definition. A platform reads the frontmatter, registers triggers, and manages executions. This eliminates the need for separate "schedule" or "task" database records pointing at workflow files.
+
+### 2.5 Execution Model
+
+A workflow has two concepts:
+
+| Concept | What it is | Persistence |
+|---------|-----------|-------------|
+| **Workflow** | The definition of work and how it's triggered | `.md` file on disk |
+| **Execution** | A single run of a workflow | Database record |
+
+The workflow file is the source of truth. Platforms may cache workflow metadata in a database table for fast listing and querying, but the file is canonical.
+
 All frontmatter fields beyond `name` and `description` are optional. A file with only those two fields is a valid Layer 0 workflow (plain skill).
 
 ---
@@ -616,6 +643,58 @@ Implementations can claim conformance at different levels:
 | **Runner (Linear)** | Execute Layer 0-1 workflows (sequential steps) |
 | **Runner (Full)** | Execute Layer 0-3 workflows (branching, parallel, long-running) |
 | **Auditor** | Emit conformant NDJSON audit events for all step executions |
+
+---
+
+## 12. Recommended Workflow Patterns
+
+Agent Flow defines three recommended starting patterns. These serve as templates for new workflows and encode best practices for budgets, observability, and error handling.
+
+### 12.1 Simple Pipeline
+
+A linear sequence of steps with no agents or branching. Suitable for scheduled reports, data extraction, and single-task automation.
+
+```
+validate → process → output
+```
+
+**Characteristics:**
+- Layer 1 (linear)
+- All steps are `transform` or `tool` type
+- No agent definitions needed
+- Low budgets (few steps, few tokens)
+- Best for deterministic, repeatable processes
+
+### 12.2 Agentic Workflow
+
+Multiple specialist agents with quality review. Suitable for analysis, content creation, and research tasks.
+
+```
+validate → specialist work → QA gate → assemble output
+```
+
+**Characteristics:**
+- Layer 1-2 (linear or with conditional QA)
+- Agent definitions with role, goal, and expected output
+- A `gate` step with a critic agent for quality assurance
+- Medium budgets
+- The `expected_output` field on agents and steps is the key structural guardrail — it constrains LLM output shape without limiting reasoning
+
+### 12.3 Parallel Fan-out
+
+Split work across multiple specialists, merge results with conflict handling, and confirm before proceeding. Suitable for multi-perspective analysis and document processing.
+
+```
+validate → fan-out to workers → merge → confirmation gate → output
+```
+
+**Characteristics:**
+- Layer 2 (parallel bundles)
+- Bundle with multiple workers, each with per-worker budgets
+- Explicit merge strategy and conflict handling
+- Confirmation gate before final output (human or automated)
+- Higher budgets to accommodate parallel execution
+- The merge step makes conflict resolution auditable — not silent overwrite
 
 ---
 

@@ -98,7 +98,28 @@ reads: [state.reviewed]
 writes: [output]
 ```
 
+Workflows are self-contained — trigger configuration lives in the frontmatter too:
+
+```yaml
+triggers:
+  schedule: "0 6 * * 1"    # run weekly on Monday at 6am
+  manual: true              # can be run on demand
+  api: true                 # can be triggered via API
+```
+
+Two concepts, not three: **Workflow** (the file) and **Execution** (a run). No separate "task" or "schedule" record needed.
+
 See the [full specification](SPEC.md) for complete details, step types, agent definitions, bundle configuration, and more.
+
+## Recommended Patterns
+
+| Pattern | Structure | Use Case |
+|---------|-----------|----------|
+| **Simple Pipeline** | validate → process → output | Scheduled reports, data extraction |
+| **Agentic Workflow** | validate → specialist → QA gate → assemble | Analysis, content creation, research |
+| **Parallel Fan-out** | validate → fan-out → merge → confirm → output | Multi-perspective analysis, document processing |
+
+See the [examples/](examples/) directory for complete implementations of each pattern.
 
 ## Standards We Build On
 
@@ -121,9 +142,10 @@ sasha-workflow/
 │   ├── schema.json      # JSON Schema for validating workflow files
 │   └── conventions.md   # Standard reason codes, event types
 ├── examples/
-│   ├── transcript-to-report.md
-│   ├── document-creation.md
-│   └── simple-skill.md
+│   ├── transcript-to-report.md      # Agentic: parallel extraction + QA
+│   ├── document-creation.md         # Long-running: drafting + approval gate
+│   ├── report-publisher-pipeline.md # Deterministic: multi-format export
+│   └── simple-skill.md              # Layer 0: plain skill as workflow
 └── README.md
 ```
 

@@ -17,6 +17,10 @@ budgets:
   max_tokens: 80000
   deadline_seconds: 1800
 
+triggers:
+  manual: true
+  api: true
+
 tools:
   allowlist: [drive.read, drive.write, web.search, pdf.extract]
   workers_can_call_tools: true
