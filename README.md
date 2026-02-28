@@ -191,6 +191,7 @@ sasha-workflow/
 │   ├── transcript-to-report.md      # Agentic: parallel extraction + QA
 │   ├── document-creation.md         # Long-running: drafting + approval gate
 │   ├── report-publisher-pipeline.md # Deterministic: multi-format export
+│   ├── client-onboarding.md         # Full-featured: v0.2.0 showcase with all new fields
 │   └── simple-skill.md              # Layer 0: plain skill as workflow
 └── README.md
 ```
