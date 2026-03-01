@@ -111,6 +111,30 @@ Two concepts, not three: **Workflow** (the file) and **Execution** (a run). No s
 
 See the [full specification](SPEC.md) for complete details, step types, agent definitions, bundle configuration, and more.
 
+## Edit Workflows with Natural Language
+
+Agent Flow files have enterprise-grade process controls under the hood — gates, audit trails, parallel orchestration, budgets, retry logic — but the editing experience is conversational. The workflow editor in Sasha Studio provides two first-class interaction modes:
+
+- **Visual canvas** — read and understand the workflow as a directed graph
+- **Chat bar** — modify anything by describing what you want in plain English
+
+The same file that enforces compliance gates and audit logging can be modified by typing a sentence. Examples:
+
+| What you want | What you type |
+|---------------|---------------|
+| Add a quality check | *"Add a human review gate after the extraction step"* |
+| Handle failures gracefully | *"Add retry with 3 attempts and exponential backoff to the API call"* |
+| Run on a schedule | *"Schedule this to run every Monday at 6am Eastern"* |
+| Split work across specialists | *"Fan out the analysis to financial, legal, and technical reviewers in parallel"* |
+| Set resource limits | *"Add a budget of 50k tokens and a 5 minute deadline"* |
+| Track outcomes | *"Add reason codes: REPORT_APPROVED on success, REPORT_REJECTED on failure"* |
+| Make steps conditional | *"Only run the enrichment step when the risk score is high"* |
+| Add audit logging | *"Enable full audit logging with PII redaction"* |
+| Define what the AI produces | *"Set the expected output to a JSON object with summary, risk_score, and recommendations"* |
+| Create output documents | *"Have this step produce a PDF report and a markdown summary"* |
+
+The chat bar also suggests edits based on what's missing from your workflow — if there's no error handling, no quality gate, or steps without expected output definitions, it will prompt you.
+
 ## Recommended Patterns
 
 | Pattern | Structure | Use Case |
