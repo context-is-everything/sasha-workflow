@@ -3,6 +3,8 @@ name: summarise-document
 description: Summarise a document into key points with a one-paragraph executive summary
 category: analysis
 icon: FileText
+allowed-tools: Read, Grep, Glob
+user-invocable: true
 ---
 
 # Summarise Document

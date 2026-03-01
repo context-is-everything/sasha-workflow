@@ -155,6 +155,39 @@
         }
       },
       "additionalProperties": false
+    },
+    "allowed-tools": {
+      "type": "string",
+      "description": "Comma-separated list of tools the skill can use (e.g. Read, Grep, Glob)"
+    },
+    "disable-model-invocation": {
+      "type": "boolean",
+      "description": "Prevent automatic AI invocation (default: false)"
+    },
+    "user-invocable": {
+      "type": "boolean",
+      "description": "Whether users can invoke this skill directly (default: true)"
+    },
+    "context": {
+      "type": "string",
+      "enum": ["fork"],
+      "description": "Execution context: fork for isolated subagent, omit for inline"
+    },
+    "agent": {
+      "type": "string",
+      "description": "Subagent type when context is fork (e.g. Explore, Plan, general-purpose)"
+    },
+    "model": {
+      "type": "string",
+      "description": "LLM model override"
+    },
+    "argument-hint": {
+      "type": "string",
+      "description": "Autocomplete hint shown to users (e.g. [issue-number])"
+    },
+    "hooks": {
+      "type": "object",
+      "description": "Lifecycle hooks scoped to skill execution"
     }
   },
   "additionalProperties": false

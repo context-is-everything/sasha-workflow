@@ -23,9 +23,17 @@ Large language models produce different outputs for the same input. This is fund
 
 This separation means workflows are predictable and auditable at the process level while preserving LLM capability at the task level.
 
-### 1.3 Relationship to Agent Skills Spec
+### 1.3 Skills, Orchestrators, and Workflows
 
-Agent Flow is a **strict superset** of the [Agent Skills Spec](https://github.com/anthropics/agent-skills-spec). Any valid `SKILL.md` file is a valid Agent Flow workflow with a single implicit step. Agent Flow adds:
+Agent Flow is built on three concepts:
+
+- **Skill** — the atomic unit of AI work: frontmatter (configuration) + body (instructions) + supporting files (context). A skill does one thing well. Any valid `SKILL.md` file is a valid Agent Flow document at Layer 0.
+- **Orchestrator** — a skill that composes other skills into a multi-step process. It has `kind: agent-flow/workflow` and step blocks. The orchestrator is the conductor; individual skills are the musicians.
+- **Workflow** — the execution of an orchestrator: the running instance with state, audit trail, and checkpoints.
+
+The `skill_ref` field on a step is the composition mechanism — it is how an orchestrator step delegates to a real skill. When a step has `type: skill` and `skill_ref: summarise-document`, the runner loads that skill's `SKILL.md`, applies its frontmatter configuration (allowed-tools, context, agent), and executes it.
+
+Agent Flow is a **strict superset** of the [Agent Skills Spec](https://github.com/anthropics/agent-skills-spec). It extends skills with:
 
 - Multi-step orchestration
 - Agent definitions with roles and constraints
@@ -38,12 +46,12 @@ Agent Flow is a **strict superset** of the [Agent Skills Spec](https://github.co
 
 Not every workflow needs every feature. Agent Flow is organized into four additive layers:
 
-| Layer | Name | Adds | Minimum Frontmatter |
-|-------|------|------|---------------------|
-| 0 | Skill | Single implicit step | `name`, `description` |
-| 1 | Linear | Ordered step blocks | `kind: agent-flow/workflow` |
-| 2 | Graph | Conditions, parallelism, branching | Step `when`, `branches`, `bundle` |
-| 3 | Long-running | Checkpoints, waitpoints, signals | `runtime` block |
+| Layer | Name | What It Is | Minimum Frontmatter |
+|-------|------|-----------|---------------------|
+| 0 | Skill | The atomic unit — frontmatter + instructions + supporting files | `name`, `description` |
+| 1 | Orchestrator (Linear) | Composes skills into ordered steps | `kind: agent-flow/workflow` |
+| 2 | Orchestrator (Graph) | Adds conditions, parallelism, branching | Step `when`, `branches`, `bundle` |
+| 3 | Orchestrator (Long-running) | Adds checkpoints, waitpoints, signals | `runtime` block |
 
 A workflow's layer is inferred from its content — there is no explicit layer field.
 
@@ -160,6 +168,35 @@ A workflow has two concepts:
 The workflow file is the source of truth. Platforms may cache workflow metadata in a database table for fast listing and querying, but the file is canonical.
 
 All frontmatter fields beyond `name` and `description` are optional. A file with only those two fields is a valid Layer 0 workflow (plain skill).
+
+### 2.6 Skill Frontmatter Extensions
+
+At Layer 0, skills may include frontmatter fields from the [Agent Skills Spec](https://github.com/anthropics/agent-skills-spec) that control execution behavior. These fields are recognized at all layers — a Layer 2 orchestrator can also use `allowed-tools` to restrict its own tool access.
+
+```yaml
+# === Optional — Skill execution ===
+allowed-tools: string              # comma-separated list of tools the skill can use (e.g. "Read, Grep, Glob")
+disable-model-invocation: boolean  # prevent automatic AI invocation (default: false)
+user-invocable: boolean            # whether users can invoke this skill directly (default: true)
+context: string                    # execution context: "fork" for isolated subagent, omit for inline
+agent: string                      # subagent type when context is fork (e.g. "Explore", "Plan", "general-purpose")
+model: string                      # LLM model override (e.g. "claude-sonnet-4-6")
+argument-hint: string              # autocomplete hint shown to users (e.g. "[issue-number]")
+hooks: object                      # lifecycle hooks scoped to skill execution
+```
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `allowed-tools` | string | all | Comma-separated tool names. Restricts which tools the skill can use. |
+| `disable-model-invocation` | boolean | `false` | When true, prevents the runner from invoking an LLM — the skill operates on its instructions alone. |
+| `user-invocable` | boolean | `true` | Whether users can invoke this skill directly from a skill picker or command palette. |
+| `context` | string | (inline) | Set to `"fork"` to execute the skill in an isolated subagent process. |
+| `agent` | string | — | Subagent type to use when `context: fork`. Values: `Explore`, `Plan`, `general-purpose`, or custom agent types. |
+| `model` | string | — | Override the default LLM model for this skill. |
+| `argument-hint` | string | — | Displayed as placeholder text in autocomplete (e.g. `[file-path]`). |
+| `hooks` | object | — | Lifecycle hooks that fire during skill execution (e.g. `onStart`, `onComplete`). |
+
+These fields extend the standard Agent Skills Spec fields (`name`, `description`, `category`, `icon`). When a skill is referenced via `skill_ref` in an orchestrator step, the runner uses these fields to configure the execution environment.
 
 ---
 
@@ -723,6 +760,8 @@ validate → fan-out to workers → merge → confirmation gate → output
 |------|----------------|-----------------|
 | `transform` | `id`, `type`, `description` | `reads`, `writes`, `when`, `on_error`, `expected_output`, `output_files`, `audit_output` |
 | `skill` | `id`, `type`, `description`, `skill_ref` or `agent` | `reads`, `writes`, `when`, `on_error`, `expected_output`, `output_files`, `audit_output` |
+
+> **Note on `skill` steps:** When `skill_ref` is provided, the step delegates to an actual SKILL.md file. The skill's frontmatter (`allowed-tools`, `context`, `agent`) governs execution. When only `agent` is provided without `skill_ref`, the step delegates to an inline agent definition.
 | `tool` | `id`, `type`, `description`, `tool` | `reads`, `writes`, `when`, `retry`, `fallback`, `output_files`, `audit_output` |
 | `decision` | `id`, `type`, `description`, `branches` | `reads` |
 | `gate` | `id`, `type`, `description` | `reads`, `writes`, `agent`, `gate_method`, `when` |

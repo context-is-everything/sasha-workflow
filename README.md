@@ -12,6 +12,10 @@ The visual editor in [Sasha Studio](https://github.com/context-is-everything/sas
 
 LLMs are non-deterministic — the same prompt can produce different outputs every time. This is their strength (creativity, reasoning, adaptation) and their weakness (unpredictability, inconsistency, hallucination).
 
+### Skills as Building Blocks
+
+A skill is the atomic unit of AI work: configuration (frontmatter) + instructions (body) + context (supporting files). An orchestrator is a skill that coordinates other skills through steps, gates, and budgets. When you create a "workflow", you're creating an orchestrator skill — a SKILL.md with `kind: agent-flow/workflow` and step blocks. The orchestrator is the conductor; individual skills are the musicians.
+
 Agent Flow applies **structural guardrails** around non-deterministic steps:
 
 | Layer | What's deterministic | What's non-deterministic |
@@ -164,12 +168,12 @@ Agent Flow files have enterprise-grade process controls under the hood — gates
 
 Agent Flow is a **strict superset** of the [Agent Skills Spec](https://github.com/anthropics/agent-skills-spec). Complexity is opt-in:
 
-| Layer | Audience | What it adds |
-|-------|----------|-------------|
-| **0 — Skill** | Everyone | A valid SKILL.md with `name`/`description`. One implicit step. |
-| **1 — Linear** | Skill authors | Ordered step blocks. Sequential pipeline. |
-| **2 — Graph** | Builders | Conditions, parallel bundles, branching. DAG execution. |
-| **3 — Long-running** | Platform teams | Checkpoints, waitpoints, signals. Resumable workflows. |
+| Layer | Name | Audience | What it adds |
+|-------|------|----------|-------------|
+| **0** | **Skill** | Everyone | The atomic unit — frontmatter + instructions + supporting files. |
+| **1** | **Orchestrator (Linear)** | Skill authors | Composes skills into ordered steps. Sequential pipeline. |
+| **2** | **Orchestrator (Graph)** | Builders | Adds conditions, parallel bundles, branching. DAG execution. |
+| **3** | **Orchestrator (Long-running)** | Platform teams | Adds checkpoints, waitpoints, signals. Resumable workflows. |
 
 ### Quick Example
 
