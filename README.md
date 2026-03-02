@@ -1,10 +1,10 @@
 # Agent Flow
 
-**Design AI workflows visually. Edit them conversationally. Run them with enterprise controls.**
+**An opinionated extension of the skill format for managing agentic workflows.**
 
-Agent Flow is a layered specification for agentic AI workflows. It defines *what* happens, *when* it proceeds, and *who* does the work — while leaving the AI free to reason creatively within each step's boundaries.
+A plain [skill](https://github.com/anthropics/agent-skills-spec) — frontmatter + instructions + context — is the atomic unit of AI work. Agent Flow is a strict superset that adds the attributes needed to manage long-running, multi-step agentic processes: step ordering, parallel execution, approval gates, budgets, audit trails, and checkpoints. Every valid skill file is already a valid Agent Flow document.
 
-The visual editor in [Sasha Studio](https://github.com/context-is-everything/sasha-ai-knowledge-management) makes the full specification accessible to anyone. Read a process as a graph, change it by typing a sentence.
+The visual editor in [Sasha Studio](https://sasha-studio.context-is-everything.com/) makes the full specification accessible to anyone. Design workflows visually, edit them conversationally, run them with enterprise controls.
 
 ![Visual workflow editor — full client-onboarding workflow with 9 steps, artifacts, and error handlers](docs/screenshots/workflow-editor-canvas.png)
 
