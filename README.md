@@ -65,7 +65,7 @@ New workflows start from one of three templates matching the recommended pattern
 
 The canvas renders each `step` block as a node in a directed graph. Nodes are connected by edges showing execution order, and the layout reads top-to-bottom like a flowchart.
 
-The full `client-onboarding` workflow is shown below — 9 steps from intake validation through to final onboarding summary, with artifact nodes branching right, error handlers branching left, and an audit trail node for the parallel research step.
+The full `client-onboarding` workflow is shown below — 9 steps from intake validation through to final onboarding summary, with artifact nodes branching right and an audit trail node for the parallel research step. Error handler nodes are hidden by default to keep the primary flow readable — toggle the **Errors** button in the toolbar to reveal them.
 
 #### Node Types
 
@@ -74,20 +74,34 @@ Every spec concept has a distinct visual representation:
 | Node | Represents | Spec field |
 |------|-----------|------------|
 | ![Trigger](docs/screenshots/node-trigger.png) | How the workflow starts | `triggers:` frontmatter |
-| ![Bundle step](docs/screenshots/node-bundle.png) | Parallel subagent execution | `type: subagent_bundle` |
+| ![Bundle step](docs/screenshots/node-bundle.png) | Parallel subagent execution | `type: parallel` or `type: subagent_bundle` |
 | ![Gate step](docs/screenshots/node-gate.png) | Approval checkpoint with conditions | `type: gate` + `when:` |
 | ![Skill step](docs/screenshots/node-skill.png) | AI specialist delegation | `type: skill` |
-| ![Artifact](docs/screenshots/node-artifact.png) | Output file produced by a step | `output_files:` |
-| ![Audit artifact](docs/screenshots/node-audit.png) | JSON audit trail | `audit_output:` |
-| ![Error handler](docs/screenshots/node-error.png) | Error handling path | `on_error:` |
+| ![Artifact](docs/screenshots/node-artifact.png) | Output file produced by a step (shows file extension label) | `output_files:` |
+| ![Audit artifact](docs/screenshots/node-audit.png) | JSON audit trail (clipboard icon) | `audit_output:` |
+| ![Error handler](docs/screenshots/node-error.png) | Error handling path (hidden by default — toggle with **Errors** button) | `on_error:` |
 
-Nodes are color-coded by step type: blue for `transform`, green for `tool`, teal for `subagent_bundle`, coral for `gate`, indigo for `skill`, and dark gray for `end`. Artifact nodes branch off to the right of their source step, and error handlers branch to the left with dashed red connectors.
+All step types are color-coded:
+
+| Step type | Color | Icon |
+|-----------|-------|------|
+| `transform` | Blue | Gear |
+| `tool` | Green | Wrench |
+| `skill` | Purple | Lightning bolt |
+| `decision` | Amber | Diamond |
+| `gate` | Red | Shield |
+| `parallel` / `subagent_bundle` | Teal | Grid |
+| `end` | Dark gray | Flag |
+
+Artifact nodes branch off to the right of their source step. Error handler nodes branch to the left with dashed red connectors — they are hidden by default and appear when you toggle the **Errors** button in the toolbar. Edges connecting to `parallel`/`subagent_bundle` nodes display fan-out and fan-in decorations showing the split and merge of parallel execution paths.
 
 ### Step Inspector
 
 Click any step node to open the property inspector. Every field from the spec's step definition is editable — type, description, reads/writes, output files, audit output, error handling, run conditions, agent assignment, expected output, and reason codes.
 
 Each field includes a **chat hint** — a clickable suggestion that populates the chat bar with a natural language instruction. This bridges the visual editor and conversational editing: see a field, click the hint, and the AI makes the change for you.
+
+Key dropdown fields (step type, error action, gate method) include an **info popover** button that shows descriptions of all available options without leaving the inspector.
 
 ![Step inspector — editing generate_welcome_pack with all spec fields visible](docs/screenshots/step-inspector.png)
 
@@ -100,14 +114,18 @@ The inspector is organized into sections that mirror the spec structure:
 - **Basics** — Step name, type, description
 - **Inputs & Outputs** — `reads`, `writes`, `output_files`, `audit_output`
 - **Rules** — `when` condition, `on_error` handling, `fallback`, `retry`, `stop_condition`
-- **AI Behaviour** — `expected_output`, `agent`, `gate_method`, `tool`, `bundle`
+- **AI Behaviour** — `expected_output`, `agent`, `gate_method`, `tool`, `bundle`, `skill_ref` (linked skill with navigation to the skill editor)
 - **Tracking** — `reason_code`, `reason_code_on_fail`
+
+For `skill` type steps, the **Linked Skill** field (`skill_ref`) lets you select from available skills in a dropdown. Once linked, a clickable "Open in skill editor" link appears, letting you navigate directly to the referenced skill.
 
 </details>
 
 ### Artifact Inspector
 
-Click an artifact or audit node to inspect it. The artifact inspector shows the filename, source step, step type, and lists all output files from that step — with the selected file highlighted.
+Click an artifact or audit node to inspect it. The artifact inspector shows the filename (with auto-derived file extension label), source step, step type, and lists all output files from that step — with the selected file highlighted.
+
+Like the step inspector, artifact fields include **chat hints** — click to populate the chat bar with suggestions like renaming the output file or adding a companion file to the step.
 
 ![Artifact inspector — welcome-letter.pdf showing source step and sibling output files](docs/screenshots/artifact-inspector.png)
 
@@ -117,13 +135,31 @@ Audit artifacts represent the `audit_output` field from the spec. Clicking one s
 
 ![Audit inspector — audit-background-research.json from the subagent_bundle step](docs/screenshots/audit-inspector.png)
 
-### Dependencies View
+### Error Inspector
 
-Toggle the **Dependencies** button to overlay implicit data-flow edges derived from `reads`/`writes` declarations. These dashed lines show which steps depend on data produced by earlier steps — even when they aren't adjacent in the execution order. Fallback edges are shown as red dashed lines.
+Toggle the **Errors** button in the toolbar to reveal error handler nodes, then click one to open the error inspector. This panel shows the complete error handling configuration for a step:
 
-This view answers "where does this data come from?" and "what breaks if I remove this step?" at a glance.
+- **When does this trigger?** — The triggering condition (e.g., "validate_intake fails")
+- **What happens** — A prose explanation of the configured error action:
+  - **Stop** — Halt the entire workflow immediately
+  - **Skip** — Skip the failed step and continue to the next
+  - **Retry** — Retry with configurable max attempts and backoff delays (e.g., `500ms → 2s → 5s`), with optional error-type filtering
+  - **Fallback** — Run an alternative step, showing the fallback step name and description
+- **Source step** — The originating step's ID, type, and description
+
+Each field has context-aware **chat hints** — for example, "change from retry to fallback" or "increase the retry attempts."
+
+![Error inspector — retry configuration with 3 attempts and exponential backoff](docs/screenshots/error-inspector-retry.png)
+
+### Overlay Toggles — Dependencies and Errors
+
+The toolbar provides two toggle buttons that overlay additional information on the canvas:
+
+**Dependencies** — Shows implicit data-flow edges derived from `reads`/`writes` declarations. These dashed lines show which steps depend on data produced by earlier steps — even when they aren't adjacent in the execution order. Fallback edges are shown as red dashed lines. This view answers "where does this data come from?" and "what breaks if I remove this step?" at a glance.
 
 ![Dependencies view — implicit data-flow edges showing state.validated_intake flowing to multiple downstream steps](docs/screenshots/workflow-dependencies.png)
+
+**Errors** — Reveals error handler nodes on the canvas. Error handlers are hidden by default to keep the primary flow readable. Toggle this button to see which steps have `on_error` handling configured, with dashed red connectors linking each step to its error handler.
 
 ### Split View — Canvas + Code Side by Side
 
@@ -135,11 +171,30 @@ This is the view where a product manager reads what the workflow does (canvas) w
 
 ### Workflow Chat
 
-The floating chat bar at the bottom of the editor lets you modify workflows conversationally. Type natural language instructions and the AI updates the workflow markdown, which immediately re-renders on the canvas.
+The floating chat bar at the bottom of the editor lets you modify workflows conversationally. Type a natural language instruction — the chat sends it to the AI via the main chat panel, where the AI generates the updated workflow markdown for you to apply.
 
 The chat bar also **suggests edits** based on what's missing from your workflow — if there's no error handling, no quality gate, or steps without expected output definitions, it will prompt you with a clickable suggestion chip.
 
 ![Workflow chat bar — contextual suggestions and natural language input](docs/screenshots/workflow-chat-bar.png)
+
+### Skill Canvas (Layer 0)
+
+Plain skills — files without `kind: agent-flow/workflow` — open in a simplified canvas view. The central **skill node** displays the skill name, category badge, and a lightning bolt icon. Any supporting files (markdown, JSON, YAML, Python, etc.) appear as **supporting file nodes** connected by dashed purple edges, showing the filename, file extension icon, and file size.
+
+Click the skill node to open the **Skill Inspector**, which exposes:
+
+- **Identity** — Name (read-only), title, description, category, icon, display order
+- **Invocation** — User invocable toggle, disable model invocation toggle, argument hint
+- **Execution** — Allowed tools, context mode (inline or fork subagent), agent type (default, explore, plan, general purpose), model override
+- **Supporting Files** — List of all supporting files with names and sizes
+
+Key dropdown fields include **info popovers** explaining each option. All editable fields include **chat hints** for conversational editing.
+
+When viewing a skill in **split view**, the right pane is an editable text area for the skill's instruction body, allowing direct inline editing alongside the canvas.
+
+### Light and Dark Mode
+
+The editor supports both light and dark themes. All node colors, inspector panels, and edge decorations adapt to the active theme.
 
 ---
 
