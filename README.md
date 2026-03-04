@@ -80,6 +80,7 @@ Every spec concept has a distinct visual representation:
 | ![Artifact](docs/screenshots/node-artifact.png) | Output file produced by a step (shows file extension label) | `output_files:` |
 | ![Audit artifact](docs/screenshots/node-audit.png) | JSON audit trail (clipboard icon) | `audit_output:` |
 | ![Error handler](docs/screenshots/node-error.png) | Error handling path (hidden by default — toggle with **Errors** button) | `on_error:` |
+| Code callout | Inline code block — shows language and dependency count (indigo) | `code:` |
 
 All step types are color-coded:
 
@@ -93,11 +94,11 @@ All step types are color-coded:
 | `parallel` / `subagent_bundle` | Teal | Grid |
 | `end` | Dark gray | Flag |
 
-Artifact nodes branch off to the right of their source step. Error handler nodes branch to the left with dashed red connectors — they are hidden by default and appear when you toggle the **Errors** button in the toolbar. Edges connecting to `parallel`/`subagent_bundle` nodes display fan-out and fan-in decorations showing the split and merge of parallel execution paths.
+Artifact nodes branch off to the right of their source step. **Code callout nodes** also appear to the right, showing a `</>` icon with the language name and dependency count — click one to open the Code Inspector with the full script and package list. Error handler nodes branch to the left with dashed red connectors — they are hidden by default and appear when you toggle the **Errors** button in the toolbar. Edges connecting to `parallel`/`subagent_bundle` nodes display fan-out and fan-in decorations showing the split and merge of parallel execution paths.
 
 ### Step Inspector
 
-Click any step node to open the property inspector. Every field from the spec's step definition is editable — type, description, reads/writes, output files, audit output, error handling, run conditions, agent assignment, expected output, and reason codes.
+Click any step node to open the property inspector. Every field from the spec's step definition is editable — type, description, reads/writes, output files, audit output, inline code (language, dependencies, script), error handling, run conditions, agent assignment, expected output, and reason codes.
 
 Each field includes a **chat hint** — a clickable suggestion that populates the chat bar with a natural language instruction. This bridges the visual editor and conversational editing: see a field, click the hint, and the AI makes the change for you.
 
@@ -113,6 +114,7 @@ Key dropdown fields (step type, error action, gate method) include an **info pop
 The inspector is organized into sections that mirror the spec structure:
 - **Basics** — Step name, type, description
 - **Inputs & Outputs** — `reads`, `writes`, `output_files`, `audit_output`
+- **Code** — `language`, `dependencies`, `script` (inline code executed during the step)
 - **Rules** — `when` condition, `on_error` handling, `fallback`, `retry`, `stop_condition`
 - **AI Behaviour** — `expected_output`, `agent`, `gate_method`, `tool`, `bundle`, `skill_ref` (linked skill with navigation to the skill editor)
 - **Tracking** — `reason_code`, `reason_code_on_fail`
@@ -134,6 +136,17 @@ Like the step inspector, artifact fields include **chat hints** — click to pop
 Audit artifacts represent the `audit_output` field from the spec. Clicking one shows the JSON filename, the source step, and the step description — making it easy to trace which step produces which audit record.
 
 ![Audit inspector — audit-background-research.json from the subagent_bundle step](docs/screenshots/audit-inspector.png)
+
+### Code Inspector
+
+Steps that include inline code execution display an indigo code callout node to the right, connected by a dashed edge. Click it to open the Code Inspector, which shows:
+
+- **Runtime** — The programming language (e.g. `python`, `javascript`, `bash`)
+- **Dependencies** — Package requirements listed as indigo chips (e.g. `pandas>=2.0`, `numpy`)
+- **Script** — The full inline source code in a scrollable monospace block
+- **Source** — The originating step's ID, type, and description
+
+This makes processing steps transparent and auditable — stakeholders can see exactly what code runs and what libraries it depends on, without opening the raw markdown. Edit code fields via the Step Inspector's **Code** section (language, dependencies, script).
 
 ### Error Inspector
 
@@ -214,6 +227,7 @@ Agent Flow files have enterprise-grade process controls under the hood — gates
 | Add audit logging | *"Enable full audit logging with PII redaction"* |
 | Define what the AI produces | *"Set the expected output to a JSON object with summary, risk_score, and recommendations"* |
 | Create output documents | *"Have this step produce a PDF report and a markdown summary"* |
+| Expose processing code | *"Add a Python code block to the aggregation step with pandas and numpy dependencies"* |
 
 ---
 

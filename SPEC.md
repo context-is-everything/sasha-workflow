@@ -247,6 +247,7 @@ reason_code_on_fail: BRIEF_INSUFFICIENT
 | `gate_method` | No | string | `human_review` \| `automated` \| `critic_agent` |
 | `output_files` | No | [string] | Files this step creates (e.g. `report.pdf`, `summary.md`) |
 | `audit_output` | No | string | Path to JSON audit file for reconciliation |
+| `code` | No | object | Code executed during this step (see §3.7) |
 
 ### 3.3 Step Types
 
@@ -298,6 +299,31 @@ branches:
 ```
 
 The `branches` map evaluates `reads` values and routes to the named step ID. A `default` key handles unmatched values.
+
+### 3.7 Code Blocks
+
+Steps often involve data transformation or processing that requires actual code execution alongside LLM reasoning. The `code` field makes these processing steps transparent and auditable — stakeholders can see exactly what code runs, and what libraries it depends on.
+
+| Property | Required | Type | Description |
+|----------|----------|------|-------------|
+| `language` | Yes | string | Runtime language (e.g. `python`, `javascript`, `bash`) |
+| `script` | Yes | string | Inline source code executed during the step |
+| `dependencies` | No | [string] | Package dependencies (e.g. `pandas>=2.0`, `lodash@4`) |
+
+```step
+id: aggregate_results
+type: transform
+description: Merge section dataframes and group by theme
+code:
+  language: python
+  script: |
+    import pandas as pd
+    results = pd.concat(section_dfs)
+    grouped = results.groupby('theme')
+  dependencies:
+    - pandas>=2.0
+    - numpy
+```
 
 ---
 
@@ -758,11 +784,11 @@ validate → fan-out to workers → merge → confirmation gate → output
 
 | Type | Required Fields | Optional Fields |
 |------|----------------|-----------------|
-| `transform` | `id`, `type`, `description` | `reads`, `writes`, `when`, `on_error`, `expected_output`, `output_files`, `audit_output` |
+| `transform` | `id`, `type`, `description` | `reads`, `writes`, `when`, `on_error`, `expected_output`, `output_files`, `audit_output`, `code` |
 | `skill` | `id`, `type`, `description`, `skill_ref` or `agent` | `reads`, `writes`, `when`, `on_error`, `expected_output`, `output_files`, `audit_output` |
 
 > **Note on `skill` steps:** When `skill_ref` is provided, the step delegates to an actual SKILL.md file. The skill's frontmatter (`allowed-tools`, `context`, `agent`) governs execution. When only `agent` is provided without `skill_ref`, the step delegates to an inline agent definition.
-| `tool` | `id`, `type`, `description`, `tool` | `reads`, `writes`, `when`, `retry`, `fallback`, `output_files`, `audit_output` |
+| `tool` | `id`, `type`, `description`, `tool` | `reads`, `writes`, `when`, `retry`, `fallback`, `output_files`, `audit_output`, `code` |
 | `decision` | `id`, `type`, `description`, `branches` | `reads` |
 | `gate` | `id`, `type`, `description` | `reads`, `writes`, `agent`, `gate_method`, `when` |
 | `parallel` | `id`, `type`, `description`, `bundle` | `reads`, `writes` |
